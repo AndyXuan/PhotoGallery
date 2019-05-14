@@ -34,7 +34,7 @@ import me.xdd.self.photogallery.ThumbnailDownloader;
 import me.xdd.self.photogallery.model.GalleryItem;
 import me.xdd.self.photogallery.net.FlickrFetchr;
 
-public class PhotoGalleryFragment extends Fragment {
+public class PhotoGalleryFragment extends VisibleFragment {
     private static final String TAG = "PhotoGalleryFragment";
     private RecyclerView mRecycleView;
     private List<GalleryItem> mItems = new ArrayList<>();
@@ -50,7 +50,8 @@ public class PhotoGalleryFragment extends Fragment {
         setRetainInstance(true);
         setHasOptionsMenu(true);
         updateItems();
-        getActivity().startService(PollService.newIntent(getActivity()));
+        //getActivity().startService(PollService.newIntent(getActivity()));
+        //PollService.setServiceAlarm(getActivity(),true);
         Handler responseHandler = new Handler();
         mThumbnailDownloader = new ThumbnailDownloader<>(responseHandler);
         mThumbnailDownloader.setThumbnailDownloadListener(new ThumbnailDownloader.ThumbnailDownloadListener<PhotoHolder>() {
@@ -117,6 +118,13 @@ public class PhotoGalleryFragment extends Fragment {
                 searchView.setQuery(query,false);
             }
         });
+
+        MenuItem toggleItem = menu.findItem(R.id.menu_item_toggle_polling);
+        if (PollService.isServiceAlarmOn(getActivity())){
+            toggleItem.setTitle(R.string.stop_polling);
+        }else{
+            toggleItem.setTitle(R.string.start_polling);
+        }
     }
 
     @Override
@@ -126,7 +134,11 @@ public class PhotoGalleryFragment extends Fragment {
                 QueryPreferences.setStoreQuery(getActivity(), null);
                 updateItems();
                 return true;
-
+            case R.id.menu_item_toggle_polling:
+                boolean shouldStartAlarm = !PollService.isServiceAlarmOn(getActivity());
+                PollService.setServiceAlarm(getActivity(), shouldStartAlarm);
+                getActivity().invalidateOptionsMenu();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
